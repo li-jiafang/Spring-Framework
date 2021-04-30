@@ -1,6 +1,7 @@
 pluginManagement {
 	repositories {
 		gradlePluginPortal()
+		maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
 		maven { url 'https://repo.spring.io/plugins-release' }
 	}
 }
@@ -36,3 +37,5 @@ rootProject.name = "spring"
 rootProject.children.each {project ->
 	project.buildFileName = "${project.name}.gradle"
 }
+include 'spring_ljf'
+

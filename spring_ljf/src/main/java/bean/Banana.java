@@ -1,11 +1,11 @@
+package bean;
+
 /**
- * @author: ljf
- * @create: 2021/4/30 18:04
- * @description:
+ * @Author ljf
+ * @Date 2021/7/1 11:36
+ * @Description
  **/
-
-public class Apple {
-
+public class Banana {
 	private Integer id;
 	private String name;
 
@@ -25,9 +25,17 @@ public class Apple {
 		this.name = name;
 	}
 
+	public Banana() {
+	}
+
+	public Banana(Integer id, String name) {
+		this.id = id;
+		this.name = name;
+	}
+
 	@Override
 	public String toString() {
-		return "Apple{" +
+		return "Banana{" +
 				"id=" + id +
 				", name='" + name + '\'' +
 				'}';

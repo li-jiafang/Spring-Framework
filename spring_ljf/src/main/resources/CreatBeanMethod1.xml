@@ -6,9 +6,7 @@
 	   profile="!dev,prod">
 
 
-
-
-	<bean id="apple" class="Apple">
+	<bean id="apple" class="bean.Apple">
 		<property name="id" value="1"/>
 		<property name="name" value="红苹果"/>
 	</bean>

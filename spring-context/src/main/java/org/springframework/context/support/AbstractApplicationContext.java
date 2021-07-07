@@ -517,32 +517,39 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
-			// Prepare this context for refreshing.
-			// 准备此上下文以进行刷新。
+			/**
+			 * 前戏:做容器刷新前的准备工作
+			 * 1.设置容器的启动时间
+			 * 2.设置活跃状态为true
+			 * 3.设置关闭状态为false
+			 * 4.获取Environment对象,并加载当前系统的属性值到Environment对象中
+			 * 5.准备监听器和事件的集合对象,默认为空的集合
+			 */
+			// Prepare this context for refreshing.(准备此上下文以进行刷新。)
 			prepareRefresh();
 
-			// Tell the subclass to refresh the internal bean factory.
-			// 告诉子类刷新内部bean工厂。
-			// 创建bean工厂,并获取bean的定义信息
+			// Tell the subclass to refresh the internal bean factory(告诉子类刷新内部bean工厂)
+			// 创建容器对象:DefaultListableBeanFactory
+			// 加载xml配置文件的属性值到当前工厂中,最重要的就是BeanDefinition
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-			// Prepare the bean factory for use in this context.
-			// 准备在这种情况下使用的bean工厂。
-			// 设置属性
+			// Prepare the bean factory for use in this context.(准备在此上下文中使用的 bean 工厂)
+			// beanFactory的准备工作,对各种属性进行填充
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// Allows post-processing of the bean factory in context subclasses.
-				// 允许在上下文子类中对bean工厂进行后处理。
-				// 前置增强器,代码是空的,留给子类实现
+				// Allows post-processing of the bean factory in context subclasses.(允许在上下文子类中对 bean 工厂进行后处理)
+				// 子类覆盖方法做额外的处理,此处我们自己不做任何扩展工作,代码是空的,留给子类做扩展实现
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
 				// 实例化并调用所有注册的BeanFactoryPostProcessor Bean，并遵循显式顺序（如果给定的话）。
 				// 必须在单例实例化之前调用
+				// 调用各种beanFactory处理器(重要)
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				// 注册bean处理器,这里只是注册功能,真正调用的是getBean()方法
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
@@ -550,11 +557,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
-				// 
+				// 初始化事件监听多路广播器
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
-				
+				// 留给子类来初始化其他的bean
 				onRefresh();
 
 				// Check for listener beans and register them.
@@ -563,7 +570,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 				// FIXME: 2021/5/11 重点
 				// Instantiate all remaining (non-lazy-init) singletons.
-				// 实例化所有剩余的（非延迟初始化）单例。
+				// 实例化所有剩余的（非延迟初始化）单例。(这一步开始执行实例化操作)
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -600,10 +607,14 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.
+		// 设置容器的启动时间
 		this.startupDate = System.currentTimeMillis();
+		// 设置关闭标志位
 		this.closed.set(false);
+		// 设置容器的激活标志位
 		this.active.set(true);
 
+		// 记录日志
 		if (logger.isDebugEnabled()) {
 			if (logger.isTraceEnabled()) {
 				logger.trace("Refreshing " + this);
@@ -613,27 +624,30 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 		}
 
-		// Initialize any placeholder property sources in the context environment.
-		// 在上下文环境中初始化任何属性资源。
+		// Initialize any placeholder property sources in the context environment.(在上下文环境中初始化任何占位符属性源)
+		// 留给子类实现,初始化属性资源
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:(验证所有标记为必需的属性都是可解析的)
 		// see ConfigurablePropertyResolver#setRequiredProperties
-		// 读取系统变量
+		// 创建并获取环境变量,验证需要的属性文件是否已放置到环境中
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
+		// 判断刷新前的应用程序监听器集合是否为空,如果为空,则将监听器添加到此集合中
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
 			// Reset local application listeners to pre-refresh state.
+			// 如果不等于空,则清空集合元素对象
 			this.applicationListeners.clear();
 			this.applicationListeners.addAll(this.earlyApplicationListeners);
 		}
 
 		// Allow for the collection of early ApplicationEvents,
 		// to be published once the multicaster is available...
+		// 创建刷新前的监听事件集合
 		this.earlyApplicationEvents = new LinkedHashSet<>();
 	}
 
@@ -868,6 +882,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
 		// Initialize conversion service for this context.
+		// 为上下文初始化类型转换器
 		if (beanFactory.containsBean(CONVERSION_SERVICE_BEAN_NAME) &&
 				beanFactory.isTypeMatch(CONVERSION_SERVICE_BEAN_NAME, ConversionService.class)) {
 			beanFactory.setConversionService(
@@ -877,11 +892,13 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no BeanFactoryPostProcessor
 		// (such as a PropertySourcesPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		// 如果beanFactory之前没有注册嵌入值解析器,则注册默认的嵌入值解析器,主要用于注解属性值的解析
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(strVal -> getEnvironment().resolvePlaceholders(strVal));
 		}
 
 		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
+		// 尽早初始化LoadTimeWeaverAware bean,以便尽早注册它们的转换器
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
 			getBean(weaverAwareName);
@@ -893,7 +910,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Allow for caching all bean definition metadata, not expecting further changes.
 		beanFactory.freezeConfiguration();
 
-		// Instantiate all remaining (non-lazy-init) singletons.
+		// Instantiate all remaining (non-lazy-init) singletons.(实例化所有剩余的（非延迟初始化）单例。)
+		// 实例化剩下的单例对象
 		beanFactory.preInstantiateSingletons();
 	}
 
